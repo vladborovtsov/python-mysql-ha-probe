@@ -1,0 +1,31 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  mysql-ha-test-client:
+    # Build the image from the Dockerfile in the current directory (.)
+    build: .
+    container_name: mysql-ha-test-client
+    # Use the environment variables defined in the .env file
+    # Pass them as command-line arguments to the python script
+    command: > # Using '>' allows multi-line command for readability
+      --host=${DB_HOST}
+      --port=${DB_PORT}
+      --user=${DB_USER}
+      --password=${DB_PASSWORD}
+      --database=${DB_NAME}
+      --workers=${WORKERS}
+      --short-query-interval=${SHORT_QUERY_INTERVAL}
+      --long-query-chance=${LONG_QUERY_CHANCE}
+      --long-query-duration=${LONG_QUERY_DURATION}
+      --connect-timeout=${CONNECT_TIMEOUT}
+    # Ensure the client restarts if it crashes, unless manually stopped
+    restart: unless-stopped
+    # Optional: Define a network if you were running MySQL within compose
+    # networks:
+    #   - test-net
+
+# Optional: Network definition (needed if running other services like DB in compose)
+# networks:
+#   test-net:
+#     driver: bridge
