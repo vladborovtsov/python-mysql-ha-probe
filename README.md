@@ -7,6 +7,7 @@ A robust Python-based testing client designed to evaluate MySQL high availabilit
 - Multiple concurrent worker threads simulating database users
 - Configurable mix of short and long-running queries
 - Robust error handling and automatic reconnection
+- Connection downtime tracking (measures and logs how long connection outages last)
 - Graceful shutdown handling
 - Detailed logging with thread-specific information
 - Command-line configuration for all important parameters

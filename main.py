@@ -78,6 +78,7 @@ def db_worker(worker_id):
     logging.info(f"Starting worker {worker_id}")
     connection = None
     retry_delay = 1 # Initial reconnect delay
+    last_error_time = None # Track the timestamp of the last connection error
 
     while not stop_event.is_set():
         try:
@@ -95,10 +96,18 @@ def db_worker(worker_id):
                         # Consider adding pool_name and pool_size if using connection pooling
                         # autocommit=True # Optional: depending on your transaction needs
                     )
-                    logging.info(f"Connection established successfully. Connection ID: {connection.connection_id}")
+                    current_time = time.time()
+                    if last_error_time is not None:
+                        downtime = current_time - last_error_time
+                        logging.info(f"Connection recovered after {downtime:.2f} seconds of downtime. Connection ID: {connection.connection_id}")
+                        last_error_time = None  # Reset the error timestamp
+                    else:
+                        logging.info(f"Connection established successfully. Connection ID: {connection.connection_id}")
                     retry_delay = 1 # Reset retry delay on successful connection
                 except mysql.connector.Error as err:
                     logging.error(f"Connection failed: {err}. Retrying in {retry_delay}s...")
+                    if last_error_time is None:
+                        last_error_time = time.time()  # Record the time of the first error
                     connection = None # Ensure connection is None if connect fails
                     time.sleep(retry_delay)
                     retry_delay = min(retry_delay * 2, 30) # Exponential backoff up to 30s
@@ -147,6 +156,8 @@ def db_worker(worker_id):
                                  mysql.connector.errorcode.ER_LOCK_WAIT_TIMEOUT, # Might indicate node issues
                                  mysql.connector.errorcode.ER_QUERY_INTERRUPTED): # Can happen during failover
                     logging.warning("Connection likely lost, attempting reconnect on next cycle.")
+                    if last_error_time is None:
+                        last_error_time = time.time()  # Record the time of the first connection loss
                     if connection and connection.is_connected():
                         try:
                             connection.close() # Attempt to close the faulty connection
@@ -170,6 +181,8 @@ def db_worker(worker_id):
         except Exception as e:
             # Catch unexpected errors in the main loop
             logging.critical(f"Unexpected critical error in worker loop: {e}", exc_info=True)
+            if last_error_time is None:
+                last_error_time = time.time()  # Record the time of the first critical error
             if connection and connection.is_connected():
                 try:
                     connection.close()
