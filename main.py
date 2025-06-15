@@ -7,6 +7,13 @@ import argparse
 import sys
 import signal
 
+# --- Logging Setup ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
 # --- Configuration ---
 # Use command-line arguments for flexibility
 
@@ -16,6 +23,7 @@ parser.add_argument('--port', type=int, default=3306, help='MySQL server port')
 parser.add_argument('--user', required=True, help='MySQL username')
 parser.add_argument('--password', required=True, help='MySQL password')
 parser.add_argument('--database', required=True, help='MySQL database name')
+parser.add_argument('--create-db', action='store_true', help='Create database if it does not exist')
 parser.add_argument('--workers', type=int, default=5, help='Number of concurrent worker threads')
 parser.add_argument('--short-query-interval', type=float, default=0.5, help='Seconds between short queries (approx)')
 parser.add_argument('--long-query-chance', type=float, default=0.1, help='Probability (0.0 to 1.0) of running a long query instead of a short one')
@@ -24,12 +32,30 @@ parser.add_argument('--connect-timeout', type=int, default=10, help='Connection 
 
 args = parser.parse_args()
 
-# --- Logging Setup ---
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+# If create_db is specified, try to create the database
+if args.create_db:
+    logging.info(f"Attempting to create database {args.database} if it doesn't exist...")
+    temp_connection = None
+    try:
+        # Connect without database selected
+        temp_connection = mysql.connector.connect(
+            host=args.host,
+            port=args.port,
+            user=args.user,
+            password=args.password,
+            connection_timeout=args.connect_timeout
+        )
+        cursor = temp_connection.cursor()
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {args.database}")
+        cursor.close()
+        logging.info(f"Database {args.database} created successfully or already exists")
+    except mysql.connector.Error as err:
+        logging.error(f"Failed to create database: {err}")
+        sys.exit(1)
+    finally:
+        if temp_connection:
+            temp_connection.close()
+
 
 # --- Global Flag for stopping threads ---
 stop_event = threading.Event()
