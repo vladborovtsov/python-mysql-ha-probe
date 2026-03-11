@@ -52,6 +52,28 @@ bash python mysql_ha_test.py --host localhost --user myuser --password mypasswor
 | `--long-query-chance` | Probability of running a long query | 0.1 |
 | `--long-query-duration` | Duration for simulated long queries (seconds) | 10 |
 | `--connect-timeout` | Connection timeout in seconds | 10 |
+| `--write-ratio` | Probability of running a write query (INSERT/UPDATE/DELETE) | 0.0 |
+| `--report-interval` | Seconds between summary reports | 30 |
+
+### Environment Variables
+
+All command-line arguments can also be set via environment variables:
+
+| Variable | Argument |
+|----------|----------|
+| `DB_HOST` | `--host` |
+| `DB_PORT` | `--port` |
+| `DB_USER` | `--user` |
+| `DB_PASSWORD` | `--password` |
+| `DB_NAME` | `--database` |
+| `CREATE_DB` | `--create-db` |
+| `WORKERS` | `--workers` |
+| `SHORT_QUERY_INTERVAL` | `--short-query-interval` |
+| `LONG_QUERY_CHANCE` | `--long-query-chance` |
+| `LONG_QUERY_DURATION` | `--long-query-duration` |
+| `CONNECT_TIMEOUT` | `--connect-timeout` |
+| `WRITE_RATIO` | `--write-ratio` |
+| `REPORT_INTERVAL` | `--report-interval` |
 
 ### Advanced Usage Example
 
@@ -71,6 +93,16 @@ bash python mysql_ha_test.py
 
 ```
 
+
+### Docker Compose
+
+You can also run the test client using Docker Compose. Create a `.env` file based on `.env.sample` and then run:
+
+```bash
+docker-compose up --build
+```
+
+The `docker-compose.yml` automatically picks up environment variables from the `.env` file in the same directory.
 
 ## License
 MIT
