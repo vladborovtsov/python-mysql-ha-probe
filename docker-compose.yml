@@ -5,16 +5,6 @@ services:
   mysql-ha-test-client:
     build: .
     container_name: mysql-ha-test-client
-    command: > # Using '>' allows multi-line command for readability
-      --host=${DB_HOST}
-      --port=${DB_PORT}
-      --user=${DB_USER}
-      --password=${DB_PASSWORD}
-      --database=${DB_NAME}
-      --workers=${WORKERS}
-      --short-query-interval=${SHORT_QUERY_INTERVAL}
-      --long-query-chance=${LONG_QUERY_CHANCE}
-      --long-query-duration=${LONG_QUERY_DURATION}
-      --connect-timeout=${CONNECT_TIMEOUT}
-      ${CREATE_DB:+--create-db}
+    env_file: .env
+    network_mode: host
     restart: unless-stopped
